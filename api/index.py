@@ -5,25 +5,20 @@ import asyncio
 import traceback
 from http.server import BaseHTTPRequestHandler
 
-# Lazy-loaded bot & dispatcher to prevent module import crashes on Vercel
-_bot = None
+# Lazy-loaded dispatcher to prevent module import crashes on Vercel
 _dp = None
-_db_initialized = False
 
-def get_bot():
-    global _bot
-    if _bot is None:
-        from aiogram import Bot
-        from aiogram.enums import ParseMode
-        from aiogram.client.default import DefaultBotProperties
-        from config import config
+def create_bot():
+    from aiogram import Bot
+    from aiogram.enums import ParseMode
+    from aiogram.client.default import DefaultBotProperties
+    from config import config
 
-        token = config.BOT_TOKEN or os.getenv("BOT_TOKEN", "")
-        if not token:
-            raise ValueError("BOT_TOKEN is missing! Please add it in Vercel Project Settings -> Environment Variables.")
-        
-        _bot = Bot(token=token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
-    return _bot
+    token = config.BOT_TOKEN or os.getenv("BOT_TOKEN", "")
+    if not token:
+        raise ValueError("BOT_TOKEN is missing! Please add it in Vercel Project Settings -> Environment Variables.")
+    
+    return Bot(token=token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 
 def get_dispatcher():
     global _dp
@@ -47,37 +42,47 @@ def get_dispatcher():
         _dp.include_router(tts_router)
     return _dp
 
-async def init_services():
-    global _db_initialized
-    if not _db_initialized:
-        from database.db import db
-        await db.init()
-        _db_initialized = True
+async def process_update(data: dict):
+    from aiogram.types import Update
+    from database.db import db
+
+    await db.init()
+    bot = create_bot()
+    try:
+        dp = get_dispatcher()
+        update = Update.model_validate(data, context={"bot": bot})
+        await dp.feed_update(bot=bot, update=update)
+    finally:
+        await bot.session.close()
+
+async def configure_webhook(webhook_url: str):
+    bot = create_bot()
+    try:
+        dp = get_dispatcher()
+        allowed_updates = dp.resolve_used_update_types()
+        res = await bot.set_webhook(url=webhook_url, allowed_updates=allowed_updates)
+        info = await bot.get_webhook_info()
+        return res, info
+    finally:
+        await bot.session.close()
 
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
         try:
+            from config import config
             host = self.headers.get("Host", "")
             path = self.path
 
             if "set_webhook" in path:
-                bot = get_bot()
                 webhook_url = f"https://{host}/"
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                try:
-                    res = loop.run_until_complete(bot.set_webhook(url=webhook_url))
-                    info = loop.run_until_complete(bot.get_webhook_info())
-                    msg = (
-                        f"<h1>✅ Webhook Successfully Configured!</h1>"
-                        f"<p><b>Target URL:</b> {webhook_url}</p>"
-                        f"<p><b>Telegram Webhook URL:</b> {info.url}</p>"
-                        f"<p><b>Pending Updates:</b> {info.pending_update_count}</p>"
-                        f"<p>👉 Open Telegram and message your bot!</p>"
-                    )
-                finally:
-                    loop.close()
-
+                res, info = asyncio.run(configure_webhook(webhook_url))
+                msg = (
+                    f"<h1>✅ Webhook Successfully Configured!</h1>"
+                    f"<p><b>Target URL:</b> {webhook_url}</p>"
+                    f"<p><b>Telegram Webhook URL:</b> {info.url}</p>"
+                    f"<p><b>Pending Updates:</b> {info.pending_update_count}</p>"
+                    f"<p>👉 Open Telegram and message your bot!</p>"
+                )
                 self.send_response(200)
                 self.send_header("Content-type", "text/html; charset=utf-8")
                 self.end_headers()
@@ -88,7 +93,7 @@ class handler(BaseHTTPRequestHandler):
             self.send_header("Content-type", "text/html; charset=utf-8")
             self.end_headers()
             
-            token_status = "Configured ✅" if (os.getenv("BOT_TOKEN")) else "Missing ❌ (Add BOT_TOKEN in Vercel Settings)"
+            token_status = "Configured ✅" if (os.getenv("BOT_TOKEN") or config.BOT_TOKEN) else "Missing ❌ (Add BOT_TOKEN in Vercel Settings)"
             html = (
                 f"<h2>🎙 Voxify AI Voice Bot is Live on Vercel!</h2>"
                 f"<p><b>BOT_TOKEN Status:</b> {token_status}</p>"
@@ -115,19 +120,7 @@ class handler(BaseHTTPRequestHandler):
                 return
 
             data = json.loads(body.decode("utf-8"))
-            from aiogram.types import Update
-
-            bot = get_bot()
-            dp = get_dispatcher()
-
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            try:
-                loop.run_until_complete(init_services())
-                update = Update.model_validate(data, context={"bot": bot})
-                loop.run_until_complete(dp.feed_update(bot=bot, update=update))
-            finally:
-                loop.close()
+            asyncio.run(process_update(data))
 
             self.send_response(200)
             self.send_header("Content-type", "application/json")

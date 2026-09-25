@@ -12,11 +12,19 @@ from config import config
 router = Router()
 
 @router.message(F.text & ~F.text.startswith("/"))
+@router.edited_message(F.text & ~F.text.startswith("/"))
 async def handle_tts_request(message: Message):
     user_id = message.from_user.id
     text = message.text.strip()
     
     user = await db.get_user(user_id)
+    if not user:
+        user = await db.get_or_create_user(
+            user_id=user_id,
+            username=message.from_user.username or "",
+            first_name=message.from_user.first_name or "",
+            tg_lang=message.from_user.language_code or "en"
+        )
     lang = user.get("language", "en") if user else "en"
 
     # 1. Sponsor Gating Check

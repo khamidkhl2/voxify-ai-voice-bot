@@ -1,5 +1,6 @@
 import os
 import re
+import time
 import asyncio
 import edge_tts
 import aiohttp
@@ -163,7 +164,7 @@ class TTSService:
         if voice == "auto":
             voice = cls.detect_auto_voice(text)
 
-        file_base = f"{abs(hash(text))}_{int(asyncio.get_event_loop().time() * 1000)}"
+        file_base = f"{abs(hash(text))}_{int(time.time() * 1000)}"
         mp3_path = os.path.join(temp_dir, f"{file_base}.mp3")
         ogg_path = os.path.join(temp_dir, f"{file_base}.ogg")
 

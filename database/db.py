@@ -125,18 +125,33 @@ class Database:
             return dict(row) if row else None
 
     async def update_user_language(self, user_id: int, language: str):
+        now = int(time.time())
         async with aiosqlite.connect(self.db_path) as db:
-            await db.execute("UPDATE users SET language = ? WHERE user_id = ?", (language, user_id))
+            await db.execute("""
+                INSERT INTO users (user_id, language, created_at)
+                VALUES (?, ?, ?)
+                ON CONFLICT(user_id) DO UPDATE SET language = excluded.language
+            """, (user_id, language, now))
             await db.commit()
 
     async def update_user_voice(self, user_id: int, voice: str):
+        now = int(time.time())
         async with aiosqlite.connect(self.db_path) as db:
-            await db.execute("UPDATE users SET selected_voice = ? WHERE user_id = ?", (voice, user_id))
+            await db.execute("""
+                INSERT INTO users (user_id, selected_voice, created_at)
+                VALUES (?, ?, ?)
+                ON CONFLICT(user_id) DO UPDATE SET selected_voice = excluded.selected_voice
+            """, (user_id, voice, now))
             await db.commit()
 
     async def update_user_format(self, user_id: int, format_type: str):
+        now = int(time.time())
         async with aiosqlite.connect(self.db_path) as db:
-            await db.execute("UPDATE users SET format = ? WHERE user_id = ?", (format_type, user_id))
+            await db.execute("""
+                INSERT INTO users (user_id, format, created_at)
+                VALUES (?, ?, ?)
+                ON CONFLICT(user_id) DO UPDATE SET format = excluded.format
+            """, (user_id, format_type, now))
             await db.commit()
 
     async def set_vip(self, user_id: int, days: int = 30):
