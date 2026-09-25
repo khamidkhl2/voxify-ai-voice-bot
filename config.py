@@ -23,10 +23,10 @@ class Config:
     }
     
     # VIP user pricing in Telegram Stars (if they want to bypass mandatory subs)
-    VIP_PRICE_STARS: int = int(os.getenv("VIP_PRICE_STARS", "50")) # 50 Telegram Stars (~$1)
+    VIP_PRICE_STARS: int = int(os.getenv("VIP_PRICE_STARS") or "50")
     
     # Free referrals needed to get 1 month of VIP ad-free
-    REFERRALS_FOR_VIP: int = int(os.getenv("REFERRALS_FOR_VIP", "3"))
+    REFERRALS_FOR_VIP: int = int(os.getenv("REFERRALS_FOR_VIP") or "3")
     
     # Custom TTS API settings (optional, defaults to edge-tts if empty)
     CUSTOM_TTS_API_URL: str = os.getenv("CUSTOM_TTS_API_URL", "")
