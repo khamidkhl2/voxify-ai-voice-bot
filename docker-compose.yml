@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+  voxify-bot:
+    build: .
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - ./database:/app/database
