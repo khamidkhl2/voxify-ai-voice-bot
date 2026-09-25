@@ -128,19 +128,23 @@ class TTSService:
 
     @staticmethod
     async def convert_mp3_to_ogg(mp3_path: str, ogg_path: str) -> bool:
-        cmd = [
-            "ffmpeg", "-y", "-i", mp3_path,
-            "-c:a", "libopus", "-b:a", "32k",
-            "-vbr", "on", "-compression_level", "10",
-            ogg_path
-        ]
-        proc = await asyncio.create_subprocess_exec(
-            *cmd,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
-        )
-        _, _ = await proc.communicate()
-        return proc.returncode == 0
+        try:
+            cmd = [
+                "ffmpeg", "-y", "-i", mp3_path,
+                "-c:a", "libopus", "-b:a", "32k",
+                "-vbr", "on", "-compression_level", "10",
+                ogg_path
+            ]
+            proc = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            _, _ = await proc.communicate()
+            return proc.returncode == 0
+        except Exception:
+            # If ffmpeg is not available (e.g. on basic serverless), fallback gracefully to mp3
+            return False
 
     @classmethod
     async def generate_speech(
@@ -151,7 +155,8 @@ class TTSService:
         pitch: str = "+0Hz",
         as_voice_note: bool = True
     ) -> str:
-        temp_dir = os.path.join(os.path.dirname(__file__), "..", "temp")
+        # Use /tmp on Vercel as root filesystem is read-only
+        temp_dir = "/tmp" if os.getenv("VERCEL") else os.path.join(os.path.dirname(__file__), "..", "temp")
         os.makedirs(temp_dir, exist_ok=True)
         
         # If user has auto-detect enabled, resolve voice dynamically

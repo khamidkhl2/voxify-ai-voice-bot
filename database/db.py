@@ -3,7 +3,9 @@ import os
 import time
 from typing import Optional, List, Dict, Any
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "bot_data.db")
+# On Vercel serverless, /tmp is the only writable directory
+DEFAULT_DB = "/tmp/bot_data.db" if os.getenv("VERCEL") else os.path.join(os.path.dirname(__file__), "bot_data.db")
+DB_PATH = os.getenv("DB_PATH", DEFAULT_DB)
 
 class Database:
     def __init__(self, db_path: str = DB_PATH):

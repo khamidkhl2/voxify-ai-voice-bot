@@ -66,7 +66,7 @@ async def handle_tts_request(message: Message):
         reply_kb = get_audio_share_keyboard(bot_info.username, lang=lang)
 
         input_file = FSInputFile(audio_path)
-        if as_voice_note:
+        if as_voice_note and audio_path.endswith(".ogg"):
             await message.answer_voice(
                 voice=input_file,
                 caption=caption,
