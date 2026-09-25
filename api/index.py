@@ -134,7 +134,10 @@ class handler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(b'{"ok": true}')
         except Exception as e:
-            print(f"Error handling webhook update: {e}")
+            tb = traceback.format_exc()
+            print(f"Error handling webhook update: {tb}")
             self.send_response(200)
+            self.send_header("Content-type", "application/json")
             self.end_headers()
-            self.wfile.write(b'{"ok": false}')
+            err_dict = {"ok": False, "error": str(e), "traceback": tb}
+            self.wfile.write(json.dumps(err_dict).encode("utf-8"))
