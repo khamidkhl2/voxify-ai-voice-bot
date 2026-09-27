@@ -14,8 +14,9 @@ This document contains everything needed to resume, maintain, and scale the **Vo
 | **Owner / Admin Telegram ID** | `5831301324` |
 | **GitHub Repository** | [github.com/khamidkhl2/voxify-ai-voice-bot](https://github.com/khamidkhl2/voxify-ai-voice-bot) |
 | **Live Webhook URL** | `https://voxify-ai-voice-bot.vercel.app/` |
-| **Local Project Path** | `/Users/khamid/Documents/ai-tts-monetized-bot` |
+| **Local Project Path** | `/Users/khamid/Documents/tg_bots/ai-tts-monetized-bot` |
 | **Deployment Platform** | Vercel (Serverless Python Webhook) |
+| **Sister Bots in Fleet** | [@velo_save_bot](https://t.me/velo_save_bot), [@lumichat_ai_bot](https://t.me/lumichat_ai_bot) |
 
 ---
 
