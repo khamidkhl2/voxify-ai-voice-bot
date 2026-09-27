@@ -74,6 +74,20 @@ async def cmd_referral(message: Message):
     )
     await message.answer(text, parse_mode="HTML")
 
+@router.message(Command("bots"))
+@router.message(F.text == "⚡️ Другие бесплатные боты")
+@router.message(F.text == "⚡️ More Free Bots")
+async def cmd_bots(message: Message):
+    try:
+        from shared.services.cross_promo import cross_promo
+        from shared.services.i18n_base import t
+        user = await db.get_user(message.from_user.id)
+        lang = user.get("language", "en") if user else "en"
+        kb = cross_promo.get_bots_keyboard(current_bot_id="tts", lang=lang)
+        await message.answer(t("bots_menu_title", lang=lang), reply_markup=kb, parse_mode="HTML")
+    except Exception as e:
+        await message.answer("⚡️ <b>Discover our sister bots:</b>\n\n• @SaveFlowBot — Video Downloader\n• @NexaChatBot — AI Smart Assistant\n• @PixelCraftBot — AI Art Generator\n• @QuickToolsBot — BG Remover & Converter", parse_mode="HTML")
+
 @router.message(Command("vip"))
 async def cmd_vip(message: Message):
     is_vip = await db.is_user_vip(message.from_user.id)

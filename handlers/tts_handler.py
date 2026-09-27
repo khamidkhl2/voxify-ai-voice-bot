@@ -69,6 +69,13 @@ async def handle_tts_request(message: Message):
         ad_line = ""
         if not is_vip:
             ad_line = f"\n\n📢 <i>{config.FALLBACK_AD_TEXT}</i>"
+            try:
+                from shared.services.cross_promo import cross_promo
+                tip = cross_promo.get_tip_footer("tts", lang)
+                if tip:
+                    ad_line += tip
+            except Exception:
+                pass
 
         caption = f"🎙 <b>Voice:</b> <code>{voice}</code>{ad_line}"
         reply_kb = get_audio_share_keyboard(bot_info.username, lang=lang)
