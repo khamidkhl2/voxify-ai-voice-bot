@@ -86,7 +86,7 @@ async def cmd_bots(message: Message):
         kb = cross_promo.get_bots_keyboard(current_bot_id="tts", lang=lang)
         await message.answer(t("bots_menu_title", lang=lang), reply_markup=kb, parse_mode="HTML")
     except Exception as e:
-        await message.answer("⚡️ <b>Discover our sister bots:</b>\n\n• @SaveFlowBot — Video Downloader\n• @NexaChatBot — AI Smart Assistant\n• @PixelCraftBot — AI Art Generator\n• @QuickToolsBot — BG Remover & Converter", parse_mode="HTML")
+        await message.answer("⚡️ <b>Discover our sister bots:</b>\n\n• @velo_save_bot — Video Downloader\n• @lumichat_ai_bot — AI Smart Assistant", parse_mode="HTML")
 
 @router.message(Command("vip"))
 async def cmd_vip(message: Message):
