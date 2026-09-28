@@ -13,23 +13,25 @@ router = Router()
 class AdOrderStates(StatesGroup):
     waiting_for_channel_info = State()
 
+from shared.services.i18n_base import t
+from shared.keyboards.common import get_advertise_inline_keyboard
+
 @router.message(Command("advertise"))
 @router.message(Command("sponsor"))
 async def cmd_advertise(message: Message):
-    text = (
-        "📈 <b>Promote Your Channel via AI TTS Bot</b>\n\n"
-        "Get guaranteed, active Telegram subscribers through our <b>Mandatory Subscription (ОП)</b> engine!\n\n"
-        "⚡️ <b>How it works:</b>\n"
-        "1. Every user must join your channel to unlock free AI voice generations.\n"
-        "2. The bot automatically tracks delivered subscribers.\n"
-        "3. Real-time activation via CryptoPay (USDT, TON, BTC) or direct admin contact.\n\n"
-        "👇 <b>Select a package to start:</b>"
-    )
-    await message.answer(text, reply_markup=get_advertising_keyboard(), parse_mode="HTML")
+    user = await db.get_user(message.from_user.id)
+    lang = user.get("language", "en") if user else "en"
+    text = t("advertise_title", lang=lang)
+    kb = get_advertise_inline_keyboard(lang=lang)
+    await message.answer(text, reply_markup=kb, parse_mode="HTML")
 
 @router.callback_query(F.data == "open_advertise")
 async def callback_open_advertise(callback: CallbackQuery):
-    await cmd_advertise(callback.message)
+    user = await db.get_user(callback.from_user.id)
+    lang = user.get("language", "en") if user else "en"
+    text = t("advertise_title", lang=lang)
+    kb = get_advertise_inline_keyboard(lang=lang)
+    await callback.message.answer(text, reply_markup=kb, parse_mode="HTML")
     await callback.answer()
 
 @router.callback_query(F.data.startswith("buy_sponsor:"))
