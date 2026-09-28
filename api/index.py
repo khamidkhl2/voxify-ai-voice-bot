@@ -25,7 +25,7 @@ def get_dispatcher():
     if _dp is None:
         from aiogram import Dispatcher
         from handlers.start import router as start_router
-        from handlers.admin import router as admin_router
+        from shared.handlers.admin_common import admin_router
         from handlers.voice_settings import router as voice_router
         from handlers.sponsor_gate import router as sponsor_gate_router
         from handlers.advertise import router as advertise_router
